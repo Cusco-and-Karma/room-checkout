@@ -1,0 +1,982 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<title>Pierce Music Room Checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --paper:#f8f6f5; --surface:#ffffff; --surface-2:#f2efed; --surface-3:#e9e5e2;
+  --ink:#171a1d; --ink-2:#4a4f55; --ink-3:#7b8189; --line:#e2ddd9; --line-2:#cfc8c3;
+  --accent:#7a2937; --accent-ink:#ffffff; --accent-soft:#f3e4e6; --accent-line:#d9b6bc;
+  --k-class:#b8862b; --k-class-bg:#fbf1dc; --k-amp:#3f7396; --k-amp-bg:#e4eef5;
+  --k-accomp:#5f8a5c; --k-accomp-bg:#e6f0e5; --k-office:#bd6a3e; --k-office-bg:#fbeae0;
+  --k-encore:#7f639c; --k-encore-bg:#efe9f5; --k-checkout:#7a2937; --k-checkout-bg:#f7e7e9;
+  --k-blocked:#6b7076; --k-blocked-bg:#eceaea;
+  --warn:#9a6407; --warn-bg:#fdf0d8; --ok:#3f6b45;
+  --shadow:0 1px 2px rgba(23,26,29,.06),0 8px 24px -12px rgba(23,26,29,.18);
+  --shadow-lg:0 2px 8px rgba(23,26,29,.08),0 24px 60px -20px rgba(23,26,29,.32);
+  --r:7px; --gut:64px; --colw:172px; --ppm:1.0;
+  --font-d:"Bricolage Grotesque","Helvetica Neue",sans-serif;
+  --font-b:"Public Sans","Helvetica Neue",Arial,sans-serif;
+  --font-m:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161a; --surface:#1b1e23; --surface-2:#22262c; --surface-3:#2b3037;
+  --ink:#eceaea; --ink-2:#b3b8bf; --ink-3:#848b94; --line:#2e333a; --line-2:#3d434c;
+  --accent:#e08a99; --accent-ink:#20131a; --accent-soft:#3a222a; --accent-line:#5c3540;
+  --k-class:#e0b464; --k-class-bg:#3a3021; --k-amp:#8ab6d6; --k-amp-bg:#1f2c37;
+  --k-accomp:#96c091; --k-accomp-bg:#212e21; --k-office:#e39a6f; --k-office-bg:#382519;
+  --k-encore:#b79ed4; --k-encore-bg:#2c2436; --k-checkout:#e08a99; --k-checkout-bg:#37212a;
+  --k-blocked:#9aa1a9; --k-blocked-bg:#262a2f;
+  --warn:#e0b464; --warn-bg:#3a3021; --ok:#8fc196;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  --shadow-lg:0 2px 8px rgba(0,0,0,.5),0 24px 60px -20px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"]{
+  --paper:#14161a; --surface:#1b1e23; --surface-2:#22262c; --surface-3:#2b3037;
+  --ink:#eceaea; --ink-2:#b3b8bf; --ink-3:#848b94; --line:#2e333a; --line-2:#3d434c;
+  --accent:#e08a99; --accent-ink:#20131a; --accent-soft:#3a222a; --accent-line:#5c3540;
+  --k-class:#e0b464; --k-class-bg:#3a3021; --k-amp:#8ab6d6; --k-amp-bg:#1f2c37;
+  --k-accomp:#96c091; --k-accomp-bg:#212e21; --k-office:#e39a6f; --k-office-bg:#382519;
+  --k-encore:#b79ed4; --k-encore-bg:#2c2436; --k-checkout:#e08a99; --k-checkout-bg:#37212a;
+  --k-blocked:#9aa1a9; --k-blocked-bg:#262a2f;
+  --warn:#e0b464; --warn-bg:#3a3021; --ok:#8fc196;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  --shadow-lg:0 2px 8px rgba(0,0,0,.5),0 24px 60px -20px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-b);
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.mast,.bar,.legend{flex:none}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.mono{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+
+/* ---------- masthead ---------- */
+.mast{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  padding:14px 20px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.mast h1{font-family:var(--font-d);font-size:19px;font-weight:800;margin:0;letter-spacing:-.015em}
+.mast .dept{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.mast .spacer{flex:1}
+.badge{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;
+  padding:4px 9px;border-radius:20px;border:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap}
+.badge.edit{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.badge.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--ok);margin-right:6px;vertical-align:1px}
+
+/* ---------- control bar ---------- */
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 20px;border-bottom:1px solid var(--line);background:var(--surface);z-index:60}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--line-2);border-radius:var(--r);padding:6px 11px;cursor:pointer;
+  font-weight:600;font-size:13px;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{background:var(--surface-2);border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.icon{padding:6px 8px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden}
+.seg button{background:var(--surface);border:0;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px}
+.seg button+button{border-left:1px solid var(--line-2)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.date-nav{display:flex;align-items:center;gap:4px}
+.datestamp{font-family:var(--font-d);font-weight:700;font-size:15px;letter-spacing:-.01em;
+  min-width:190px;text-align:center}
+.datestamp small{display:block;font-family:var(--font-b);font-weight:600;font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+input[type=date],input[type=time],input[type=text],select,textarea{
+  background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);padding:6px 9px}
+input[type=text]::placeholder{color:var(--ink-3)}
+.search{min-width:170px}
+.bar .spacer{flex:1}
+
+/* ---------- grid ---------- */
+.stage{overflow:auto;background:var(--paper);position:relative;flex:1;min-height:0}
+.grid{display:grid;min-width:max-content;position:relative}
+.hd{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line-2);
+  padding:8px 9px;min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.hd .rn{font-family:var(--font-m);font-weight:600;font-size:13px;letter-spacing:-.02em}
+.hd .rd{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.hd.corner{position:sticky;left:0;top:0;z-index:40;border-right:1px solid var(--line-2)}
+.hd+.hd{border-left:1px solid var(--line)}
+.hd.today{box-shadow:inset 0 -3px 0 var(--accent)}
+.gut{position:sticky;left:0;z-index:20;background:var(--paper);border-right:1px solid var(--line-2);
+  padding-top:9px}
+.col{position:relative;border-left:1px solid var(--line);background:var(--surface);padding-top:9px}
+.col.free{cursor:copy}
+.col:nth-child(2n){background:var(--surface-2)}
+.tick{position:absolute;left:0;right:0;border-top:1px solid var(--line);pointer-events:none}
+.tick.half{border-top-style:dotted;opacity:.65}
+.tlab{position:absolute;right:8px;font-family:var(--font-m);font-size:11px;color:var(--ink-3);
+  transform:translateY(-6px);font-variant-numeric:tabular-nums}
+.nowline{position:absolute;left:0;right:0;height:2px;background:var(--accent);z-index:14;pointer-events:none}
+.nowline{opacity:.75}
+.col:first-of-type .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;
+  border-radius:50%;background:var(--accent)}
+
+/* ---------- events ---------- */
+.ev{position:absolute;left:3px;right:3px;border-radius:5px;padding:4px 6px 3px;overflow:hidden;
+  cursor:pointer;border:1px solid;border-left-width:3px;z-index:10;
+  transition:box-shadow .12s,transform .12s;text-align:left;font:inherit;display:block;width:calc(100% - 6px)}
+.ev:hover{box-shadow:var(--shadow);z-index:15}
+.ev .t{font-family:var(--font-m);font-size:10px;font-weight:500;opacity:.8;letter-spacing:-.02em}
+.ev .n{font-weight:700;font-size:11.5px;line-height:1.22;margin-top:1px;
+  overflow-wrap:break-word;hyphens:none}
+.ev .s{font-size:10.5px;line-height:1.25;opacity:.85;margin-top:1px;overflow-wrap:break-word}
+.ev.narrow .t{font-size:9px}
+.ev.narrow .n{font-size:10.5px;line-height:1.18}
+.ev.narrow .s{font-size:9.5px}
+.ev.short{padding:2px 6px}
+.ev.short .t{font-size:9px;line-height:1.1}
+.ev.short .n{font-size:10px;line-height:1.14}
+.ev.short .s{font-size:9px;line-height:1.14}
+.ev.short .flag{display:none}
+.ev.tiny{padding:1px 6px;display:flex;align-items:center;gap:5px}
+.ev.tiny .t{font-size:9px;flex:none}
+.ev.tiny .n{font-size:9.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.tiny .s,.ev.tiny .flag{display:none}
+.ev[data-k=class]{background:var(--k-class-bg);border-color:var(--k-class);color:var(--ink)}
+.ev[data-k=amp]{background:var(--k-amp-bg);border-color:var(--k-amp)}
+.ev[data-k=accomp]{background:var(--k-accomp-bg);border-color:var(--k-accomp)}
+.ev[data-k=office]{background:var(--k-office-bg);border-color:var(--k-office)}
+.ev[data-k=encore]{background:var(--k-encore-bg);border-color:var(--k-encore)}
+.ev[data-k=checkout]{background:var(--k-checkout-bg);border-color:var(--k-checkout)}
+.ev[data-k=blocked]{background:var(--k-blocked-bg);border-color:var(--k-blocked);
+  background-image:repeating-linear-gradient(135deg,transparent 0 6px,rgba(107,112,118,.16) 6px 12px)}
+.ev.cancelled{opacity:.5;background-image:none;background:var(--surface-3);
+  border-color:var(--line-2);border-left-style:dashed}
+.ev.cancelled .n,.ev.cancelled .s{text-decoration:line-through}
+.ev.moved{box-shadow:inset 0 0 0 1px var(--warn)}
+.ev.dim{opacity:.28}
+.flag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:1px 4px;border-radius:3px;margin-top:2px;background:var(--warn-bg);color:var(--warn)}
+.flag.cx{background:var(--surface-3);color:var(--ink-2)}
+
+/* ---------- legend ---------- */
+.legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:7px 20px;
+  border-top:1px solid var(--line);background:var(--surface);font-size:11.5px;color:var(--ink-2)}
+.lg{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:11.5px;
+  background:transparent;border:1px solid transparent;border-radius:20px;padding:3px 9px;
+  cursor:pointer;color:var(--ink-2);font-family:inherit;transition:background .12s,border-color .12s}
+.lg:hover{background:var(--surface-2);border-color:var(--line)}
+.lg[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.lg.clear{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.legend .meta{margin-left:auto;color:var(--ink-3);font-weight:500;padding-left:10px}
+.sw{width:11px;height:11px;border-radius:3px;border:1px solid;border-left-width:3px;flex:none}
+.termnote{padding:8px 20px;background:var(--warn-bg);color:var(--warn);border-bottom:1px solid var(--line);
+  font-size:12.5px;font-weight:500}
+.rmtag{display:inline-block;font-family:var(--font-m);font-size:9px;font-weight:600;
+  background:var(--ink);color:var(--paper);border-radius:3px;padding:0 3px;margin-right:4px;
+  vertical-align:1px;letter-spacing:0}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(23,26,29,.42);z-index:200;
+  opacity:0;pointer-events:none;transition:opacity .18s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:var(--surface);
+  border-left:1px solid var(--line-2);box-shadow:var(--shadow-lg);z-index:210;
+  transform:translateX(100%);transition:transform .22s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.dhead{display:flex;align-items:flex-start;gap:12px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.dhead h2{font-family:var(--font-d);font-size:17px;font-weight:800;margin:0;letter-spacing:-.015em;flex:1}
+.dhead .sub{font-size:12px;color:var(--ink-3);margin-top:2px;font-weight:500}
+.dbody{padding:16px 18px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:16px}
+.dfoot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;
+  background:var(--surface-2)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field>label{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-3)}
+.field input,.field select,.field textarea{width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:20px;padding:4px 10px;
+  cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font-m);letter-spacing:-.02em}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chip.wd{font-family:var(--font-b);letter-spacing:.03em}
+.note{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;
+  font-size:12.5px;color:var(--ink-2)}
+.note.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.note strong{color:inherit}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:13px;align-items:baseline}
+.kv dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-3);
+  padding-top:2px}
+.kv dd{margin:0}
+.sec-t{font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:.02em;
+  padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.list{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden}
+.item{background:var(--surface);padding:9px 11px;display:flex;gap:10px;align-items:flex-start;
+  cursor:pointer;text-align:left;border:0;width:100%;font:inherit}
+.item:hover{background:var(--surface-2)}
+.item .bar-c{width:3px;align-self:stretch;border-radius:2px;flex:none}
+.item .m{flex:1;min-width:0}
+.item .m b{display:block;font-size:12.5px;font-weight:700}
+.item .m span{display:block;font-size:11.5px;color:var(--ink-3);font-family:var(--font-m)}
+.empty{padding:22px;text-align:center;color:var(--ink-3);font-size:12.5px;
+  border:1px dashed var(--line-2);border-radius:var(--r)}
+.hidden{display:none !important}
+.signin{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.97);z-index:210;
+  width:min(370px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line-2);
+  border-radius:12px;box-shadow:var(--shadow-lg);padding:22px;opacity:0;pointer-events:none;
+  transition:opacity .16s,transform .16s}
+.signin.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.signin h2{font-family:var(--font-d);font-size:18px;font-weight:800;margin:0;letter-spacing:-.015em}
+.si-sub{font-size:12.5px;color:var(--ink-3);margin:6px 0 16px;line-height:1.5}
+.signin form{display:flex;flex-direction:column;gap:12px}
+.si-err{margin:0;font-size:12.5px;color:var(--accent);font-weight:600}
+.si-actions{display:flex;gap:8px;margin-top:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+@media (max-width:640px){
+  :root{--colw:132px;--gut:52px}
+  .mast{padding:12px 14px 10px}.bar{padding:9px 14px;gap:8px}.legend{padding:8px 14px;gap:10px;font-size:11px}
+  .datestamp{min-width:0;font-size:14px}.datestamp small{font-size:9.5px}
+  .search{min-width:0;flex:1}
+  .mast h1{font-size:17px}
+}
+</style>
+
+<header class="mast">
+  <div>
+    <div class="dept">Los Angeles Pierce College &middot; Music</div>
+    <h1>Room Checkout</h1>
+  </div>
+  <div class="spacer"></div>
+  <span class="badge live" id="connBadge">Connecting</span>
+  <span class="badge" id="roleBadge">Checking access</span>
+  <button class="btn" id="authBtn">Sign in to edit</button>
+</header>
+
+<div class="scrim" id="authScrim"></div>
+<div class="signin" id="signin" role="dialog" aria-modal="true" aria-labelledby="siTitle" aria-hidden="true">
+  <h2 id="siTitle">Sign in to edit</h2>
+  <p class="si-sub">Viewing needs no account. Signing in unlocks checkouts and schedule changes for department staff.</p>
+  <form id="siForm">
+    <div class="field"><label for="siEmail">Email</label>
+      <input type="email" id="siEmail" autocomplete="username" required></div>
+    <div class="field"><label for="siPass">Password</label>
+      <input type="password" id="siPass" autocomplete="current-password" required></div>
+    <p class="si-err" id="siErr" hidden></p>
+    <div class="si-actions">
+      <button class="btn primary" type="submit" id="siGo">Sign in</button>
+      <button class="btn ghost" type="button" id="siCancel">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div class="bar">
+  <div class="date-nav">
+    <button class="btn icon" id="prev" title="Previous day" aria-label="Previous day">&#8592;</button>
+    <div class="datestamp" id="stamp"><small>&nbsp;</small>&nbsp;</div>
+    <button class="btn icon" id="next" title="Next day" aria-label="Next day">&#8594;</button>
+  </div>
+  <input type="date" id="datepick" aria-label="Jump to date">
+  <button class="btn ghost" id="today">Today</button>
+  <div class="seg" role="group" aria-label="View">
+    <button id="vDay" aria-pressed="true">Day</button>
+    <button id="vWeek" aria-pressed="false">Week</button>
+  </div>
+  <select id="weekRoom" class="hidden" aria-label="Room for week view"></select>
+  <div class="spacer"></div>
+  <input type="text" class="search" id="search" placeholder="Filter room, class, person" aria-label="Filter">
+  <button class="btn" id="foldBtn" title="Show or hide practice rooms 3414-A through 3414-I"></button>
+  <button class="btn" id="openChanges">Changes <span id="chgCount" class="mono"></span></button>
+  <button class="btn" id="exportBtn">Export</button>
+  <button class="btn primary hidden" id="newBtn">+ Check out rooms</button>
+</div>
+
+<div class="termnote hidden" id="termnote"></div>
+<main class="stage" id="stage"><div class="grid" id="grid"></div></main>
+
+<div class="legend" id="legend"></div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" aria-hidden="true">
+  <div class="dhead">
+    <div style="flex:1">
+      <h2 id="dTitle">Detail</h2>
+      <div class="sub" id="dSub"></div>
+    </div>
+    <button class="btn ghost icon" id="dClose" aria-label="Close">&#10005;</button>
+  </div>
+  <div class="dbody" id="dBody"></div>
+  <div class="dfoot" id="dFoot"></div>
+</aside>
+
+<script>
+const DATA = {"rooms":["3400 (Choir)","3401 (Band)","3414-A (Practice)","3414-B (Practice)","3414-C (Practice)","3414-D (Practice)","3414-E (Practice)","3414-F (Practice)","3414-G (Practice)","3414-H (Practice)","3414-I (Perc)","3414-J (Lance)","3414-K (Perc)","3414-L (Michelle)","3414-M (Commercial)","3422","3423","3424 (Piano lab)"],"baseline":[{"id":"mon-3400-choir-0935","dow":1,"room":"3400 (Choir)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 412-414","title":"Elementary Voice","instructor":"Garineh Avakian"},{"id":"mon-3400-choir-1245","dow":1,"room":"3400 (Choir)","kind":"class","start":"12:45","end":"14:10","code":"MUSIC 299, 501","title":"Music Honors / College Choir","instructor":"Garineh Avakian"},{"id":"mon-3400-choir-1420","dow":1,"room":"3400 (Choir)","kind":"class","start":"14:20","end":"16:25","code":"MUSIC 265","title":"Recording Arts Workshop","instructor":"Mark Cross"},{"id":"mon-3401-band-1545","dow":1,"room":"3401 (Band)","kind":"amp","start":"15:45","end":"17:15","code":"","title":"AMP Lessons","instructor":"Jason Stoll"},{"id":"mon-3401-band-1815","dow":1,"room":"3401 (Band)","kind":"office","start":"18:15","end":"18:50","code":"","title":"Office Hours","instructor":"Elliot Deutsch"},{"id":"mon-3401-band-1850","dow":1,"room":"3401 (Band)","kind":"class","start":"18:50","end":"22:00","code":"MUSIC 781","title":"Studio Jazz Band","instructor":"Elliot Deutsch"},{"id":"mon-3414-j-lance-0800","dow":1,"room":"3414-J (Lance)","kind":"accomp","start":"08:00","end":"09:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"mon-3414-j-lance-1100","dow":1,"room":"3414-J (Lance)","kind":"accomp","start":"11:00","end":"11:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"mon-3414-j-lance-1130","dow":1,"room":"3414-J (Lance)","kind":"accomp","start":"11:30","end":"12:30","code":"","title":"Lance Lunch / Space Unavailable","instructor":""},{"id":"mon-3414-j-lance-1400","dow":1,"room":"3414-J (Lance)","kind":"accomp","start":"14:00","end":"16:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"mon-3414-k-perc-1615","dow":1,"room":"3414-K (Perc)","kind":"amp","start":"16:15","end":"17:45","code":"","title":"AMP Lessons","instructor":"Carson Schafer"},{"id":"mon-3414-l-michelle-1100","dow":1,"room":"3414-L (Michelle)","kind":"accomp","start":"11:00","end":"12:00","code":"","title":"Michelle Accomp. Hours","instructor":"Michelle"},{"id":"mon-3414-l-michelle-1345","dow":1,"room":"3414-L (Michelle)","kind":"accomp","start":"13:45","end":"14:30","code":"","title":"Michelle Accomp. Hours","instructor":"Michelle"},{"id":"mon-3414-m-commercial-1110","dow":1,"room":"3414-M (Commercial)","kind":"class","start":"11:10","end":"13:15","code":"MUSIC 161","title":"Introduction to Music Technology","instructor":"Mark Cross"},{"id":"mon-3422-0800","dow":1,"room":"3422","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 217-1","title":"Musicianship","instructor":"Charlotte Wilkins"},{"id":"mon-3422-0935","dow":1,"room":"3422","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 217-2","title":"Musicianship","instructor":"Charlotte Wilkins"},{"id":"mon-3422-1245","dow":1,"room":"3422","kind":"class","start":"12:45","end":"14:10","code":"MUSIC 101","title":"Fundamentals Of Music","instructor":"Jon Titmus"},{"id":"mon-3422-1515","dow":1,"room":"3422","kind":"amp","start":"15:15","end":"16:45","code":"","title":"AMP Lessons","instructor":"Michael Gutierrez"},{"id":"mon-3423-1110","dow":1,"room":"3423","kind":"class","start":"11:10","end":"12:35","code":"MUSIC 216-1","title":"Music Theory","instructor":"Wendy Mazon"},{"id":"mon-3423-1245","dow":1,"room":"3423","kind":"amp","start":"12:45","end":"17:15","code":"","title":"AMP Lessons","instructor":"Justine Boonstra"},{"id":"mon-3424-piano-lab-1720","dow":1,"room":"3424 (Piano lab)","kind":"class","start":"17:20","end":"17:50","code":"MUSIC 321-324","title":"Elementary Piano","instructor":"Jason Stoll"},{"id":"mon-3424-piano-lab-1750","dow":1,"room":"3424 (Piano lab)","kind":"class","start":"17:50","end":"18:45","code":"MUSIC 321-324","title":"Elementary Piano","instructor":"Jason Stoll"},{"id":"tue-3400-choir-0935","dow":2,"room":"3400 (Choir)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 411","title":"Elementary Voice","instructor":"Garineh Avakian"},{"id":"tue-3400-choir-1420","dow":2,"room":"3400 (Choir)","kind":"class","start":"14:20","end":"15:45","code":"MUSIC 250-1, 250-2, 250-3, 250-4, 299","title":"Music Performance Workshop / Music Honors","instructor":"Cameron Wilkins"},{"id":"tue-3400-choir-1550","dow":2,"room":"3400 (Choir)","kind":"office","start":"15:50","end":"16:25","code":"","title":"Office Hours","instructor":"Kevin Good"},{"id":"tue-3401-band-0935","dow":2,"room":"3401 (Band)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 299, 650-654","title":"Beginning Guitar / Classical Guitar / Music Honors","instructor":"Bryan Fasola"},{"id":"tue-3401-band-1100","dow":2,"room":"3401 (Band)","kind":"encore","start":"11:00","end":"13:00","code":"Encore","title":"Musical Theatre Techniques","instructor":"Tortell"},{"id":"tue-3401-band-1420","dow":2,"room":"3401 (Band)","kind":"class","start":"14:20","end":"16:25","code":"MUSIC 265","title":"Recording Arts Workshop","instructor":"Mark Cross"},{"id":"tue-3414-a-practice-0945","dow":2,"room":"3414-A (Practice)","kind":"amp","start":"09:45","end":"12:30","code":"","title":"AMP Lessons","instructor":"Justine Boonstra"},{"id":"tue-3414-j-lance-0830","dow":2,"room":"3414-J (Lance)","kind":"accomp","start":"08:30","end":"09:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"tue-3414-j-lance-1100","dow":2,"room":"3414-J (Lance)","kind":"accomp","start":"11:00","end":"12:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"tue-3414-j-lance-1330","dow":2,"room":"3414-J (Lance)","kind":"accomp","start":"13:30","end":"14:00","code":"","title":"Lance Lunch / Space Unavailable / Lance Accomp. Hours","instructor":""},{"id":"tue-3414-k-perc-1615","dow":2,"room":"3414-K (Perc)","kind":"amp","start":"16:15","end":"17:45","code":"","title":"AMP Lessons","instructor":"Kevin Good"},{"id":"tue-3414-l-michelle-1000","dow":2,"room":"3414-L (Michelle)","kind":"accomp","start":"10:00","end":"11:15","code":"","title":"Michelle Accomp. Hours","instructor":"Michelle"},{"id":"tue-3414-l-michelle-1145","dow":2,"room":"3414-L (Michelle)","kind":"amp","start":"11:45","end":"13:15","code":"","title":"AMP Lessons","instructor":"Holly Palmer"},{"id":"tue-3414-l-michelle-1315","dow":2,"room":"3414-L (Michelle)","kind":"accomp","start":"13:15","end":"13:30","code":"","title":"Michelle Accomp. Hours","instructor":"Michelle"},{"id":"tue-3414-m-commercial-1110","dow":2,"room":"3414-M (Commercial)","kind":"class","start":"11:10","end":"13:15","code":"MUSIC 165","title":"Introduction To Recording Arts","instructor":"Mark Cross"},{"id":"tue-3422-0800","dow":2,"room":"3422","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 217-3","title":"Musicianship","instructor":"Charlotte Wilkins"},{"id":"tue-3422-0935","dow":2,"room":"3422","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 216-2","title":"Music Theory","instructor":"Anthony Wardzinski"},{"id":"tue-3422-1110","dow":2,"room":"3422","kind":"class","start":"11:10","end":"12:35","code":"MUSIC 216-3","title":"Music Theory","instructor":"Anthony Wardzinski"},{"id":"tue-3423-0800","dow":2,"room":"3423","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 111","title":"Music Appreciation","instructor":"LAPC STAFF"},{"id":"tue-3423-1110","dow":2,"room":"3423","kind":"class","start":"11:10","end":"12:35","code":"MUSIC 101","title":"Fundamentals Of Music","instructor":"Leila Nunez-Fredell"},{"id":"tue-3424-piano-lab-0800","dow":2,"room":"3424 (Piano lab)","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 299, 322-324, 341","title":"Elementary Piano / Intermediate Piano / Music Honors","instructor":"Alexander Zhu"},{"id":"tue-3424-piano-lab-0935","dow":2,"room":"3424 (Piano lab)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 321","title":"Elementary Piano","instructor":"Alexander Zhu"},{"id":"wed-3400-choir-0935","dow":3,"room":"3400 (Choir)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 412-414","title":"Elementary Voice","instructor":"Garineh Avakian"},{"id":"wed-3400-choir-1100","dow":3,"room":"3400 (Choir)","kind":"amp","start":"11:00","end":"12:30","code":"","title":"AMP Lessons","instructor":"April Amante"},{"id":"wed-3400-choir-1245","dow":3,"room":"3400 (Choir)","kind":"class","start":"12:45","end":"14:10","code":"MUSIC 299, 501","title":"Music Honors / College Choir","instructor":"Garineh Avakian"},{"id":"wed-3400-choir-1415","dow":3,"room":"3400 (Choir)","kind":"amp","start":"14:15","end":"16:45","code":"","title":"AMP Lessons","instructor":"April Amante"},{"id":"wed-3401-band-0945","dow":3,"room":"3401 (Band)","kind":"amp","start":"09:45","end":"14:45","code":"","title":"AMP Lessons","instructor":"Jeewon Lee"},{"id":"wed-3401-band-1515","dow":3,"room":"3401 (Band)","kind":"amp","start":"15:15","end":"16:45","code":"","title":"AMP Lessons","instructor":"Jason Stoll"},{"id":"wed-3401-band-1815","dow":3,"room":"3401 (Band)","kind":"office","start":"18:15","end":"18:50","code":"","title":"Office Hours","instructor":"Lipra Blagomira"},{"id":"wed-3401-band-1850","dow":3,"room":"3401 (Band)","kind":"class","start":"18:50","end":"22:00","code":"MUSIC 705","title":"Chamber Music / Blagomira Lipari","instructor":"Wilkins Cameron"},{"id":"wed-3414-a-practice-1245","dow":3,"room":"3414-A (Practice)","kind":"amp","start":"12:45","end":"15:15","code":"","title":"AMP Lessons","instructor":"Shai Golan"},{"id":"wed-3414-j-lance-0800","dow":3,"room":"3414-J (Lance)","kind":"accomp","start":"08:00","end":"09:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"wed-3414-j-lance-1100","dow":3,"room":"3414-J (Lance)","kind":"accomp","start":"11:00","end":"11:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"wed-3414-j-lance-1130","dow":3,"room":"3414-J (Lance)","kind":"accomp","start":"11:30","end":"12:30","code":"","title":"Lance Lunch / Space Unavailable","instructor":""},{"id":"wed-3414-j-lance-1230","dow":3,"room":"3414-J (Lance)","kind":"amp","start":"12:30","end":"13:45","code":"","title":"AMP Lessons","instructor":"April Amante"},{"id":"wed-3414-j-lance-1400","dow":3,"room":"3414-J (Lance)","kind":"accomp","start":"14:00","end":"16:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"wed-3414-k-perc-1300","dow":3,"room":"3414-K (Perc)","kind":"amp","start":"13:00","end":"15:45","code":"","title":"AMP Lessons","instructor":"Doug Mattingly"},{"id":"wed-3414-l-michelle-1100","dow":3,"room":"3414-L (Michelle)","kind":"accomp","start":"11:00","end":"12:00","code":"","title":"Michelle Accomp. Hours","instructor":"Michelle"},{"id":"wed-3414-l-michelle-1345","dow":3,"room":"3414-L (Michelle)","kind":"amp","start":"13:45","end":"17:15","code":"","title":"AMP Lessons","instructor":"Holly Palmer"},{"id":"wed-3414-m-commercial-1110","dow":3,"room":"3414-M (Commercial)","kind":"class","start":"11:10","end":"13:15","code":"MUSIC 161","title":"Introduction to Music Technology","instructor":"Mark Cross"},{"id":"wed-3414-m-commercial-1420","dow":3,"room":"3414-M (Commercial)","kind":"class","start":"14:20","end":"16:25","code":"MUSIC 265","title":"Recording Arts Workshop","instructor":"Mark Cross"},{"id":"wed-3422-0800","dow":3,"room":"3422","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 217-1","title":"Musicianship","instructor":"Charlotte Wilkins"},{"id":"wed-3422-0935","dow":3,"room":"3422","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 217-2","title":"Musicianship","instructor":"Charlotte Wilkins"},{"id":"wed-3422-1245","dow":3,"room":"3422","kind":"class","start":"12:45","end":"14:10","code":"MUSIC 101","title":"Fundamentals Of Music","instructor":"Jon Titmus"},{"id":"wed-3422-1410","dow":3,"room":"3422","kind":"office","start":"14:10","end":"15:45","code":"","title":"Office Hours","instructor":"Jon Titmus"},{"id":"wed-3422-1545","dow":3,"room":"3422","kind":"amp","start":"15:45","end":"17:15","code":"","title":"AMP Lessons","instructor":"Shai Golan"},{"id":"wed-3423-1110","dow":3,"room":"3423","kind":"class","start":"11:10","end":"12:35","code":"MUSIC 216-1","title":"Music Theory","instructor":"Wendy Mazon"},{"id":"wed-3423-1400","dow":3,"room":"3423","kind":"encore","start":"14:00","end":"16:00","code":"Encore","title":"Vocal Class for Beginners","instructor":"Tortell"},{"id":"wed-3424-piano-lab-1015","dow":3,"room":"3424 (Piano lab)","kind":"amp","start":"10:15","end":"12:15","code":"","title":"AMP Lessons","instructor":"Leila Nunez-Fredell"},{"id":"wed-3424-piano-lab-1720","dow":3,"room":"3424 (Piano lab)","kind":"class","start":"17:20","end":"18:45","code":"MUSIC 321-324","title":"Elementary Piano","instructor":"Jason Stoll"},{"id":"thu-3400-choir-0935","dow":4,"room":"3400 (Choir)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 411","title":"Elementary Voice","instructor":"Garineh Avakian"},{"id":"thu-3400-choir-1110","dow":4,"room":"3400 (Choir)","kind":"class","start":"11:10","end":"13:15","code":"MUSIC 165","title":"Introduction To Recording Arts","instructor":"Mark Cross"},{"id":"thu-3400-choir-1420","dow":4,"room":"3400 (Choir)","kind":"class","start":"14:20","end":"15:45","code":"MUSIC 250, 299","title":"Music Performance Workshop / Music Honors","instructor":"Cameron Wilkins"},{"id":"thu-3400-choir-1545","dow":4,"room":"3400 (Choir)","kind":"amp","start":"15:45","end":"17:15","code":"","title":"AMP Lessons","instructor":"Cameron Wilkins"},{"id":"thu-3401-band-0935","dow":4,"room":"3401 (Band)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 299, 650-654","title":"Beginning Guitar / Classical Guitar / Music Honors","instructor":"Bryan Fasola"},{"id":"thu-3401-band-1145","dow":4,"room":"3401 (Band)","kind":"amp","start":"11:45","end":"13:15","code":"","title":"AMP Lessons","instructor":"Joseph Dhanens"},{"id":"thu-3401-band-1345","dow":4,"room":"3401 (Band)","kind":"encore","start":"13:45","end":"15:45","code":"ENCORE","title":"Encore Singers","instructor":"Domine"},{"id":"thu-3401-band-1600","dow":4,"room":"3401 (Band)","kind":"office","start":"16:00","end":"18:35","code":"","title":"Office Hours","instructor":"Wendy Mazon"},{"id":"thu-3401-band-1850","dow":4,"room":"3401 (Band)","kind":"class","start":"18:50","end":"22:00","code":"MUSIC 299, 745, 751, 755, 765","title":"Music Honors / Symphonic Band / Wind Ensemble / Brass Ensemble / Percussion Ensemble","instructor":"Wendy Mazon"},{"id":"thu-3414-a-practice-1045","dow":4,"room":"3414-A (Practice)","kind":"amp","start":"10:45","end":"13:15","code":"","title":"AMP Lessons","instructor":"April Amante"},{"id":"thu-3414-j-lance-0830","dow":4,"room":"3414-J (Lance)","kind":"accomp","start":"08:30","end":"09:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"thu-3414-j-lance-1100","dow":4,"room":"3414-J (Lance)","kind":"accomp","start":"11:00","end":"12:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"thu-3414-j-lance-1330","dow":4,"room":"3414-J (Lance)","kind":"accomp","start":"13:30","end":"14:00","code":"","title":"Lance Lunch / Space Unavailable / Lance Accomp. Hours","instructor":""},{"id":"thu-3414-k-perc-0945","dow":4,"room":"3414-K (Perc)","kind":"amp","start":"09:45","end":"13:15","code":"","title":"AMP Lessons","instructor":"Andy Brems"},{"id":"thu-3414-l-michelle-0945","dow":4,"room":"3414-L (Michelle)","kind":"amp","start":"09:45","end":"11:15","code":"","title":"AMP Lessons","instructor":"Cameron Wilkins"},{"id":"thu-3414-l-michelle-1200","dow":4,"room":"3414-L (Michelle)","kind":"accomp","start":"12:00","end":"14:00","code":"","title":"Michelle Accomp. Hours","instructor":"Michelle"},{"id":"thu-3414-m-commercial-1420","dow":4,"room":"3414-M (Commercial)","kind":"class","start":"14:20","end":"16:25","code":"MUSIC 265","title":"Recording Arts Workshop","instructor":"Mark Cross"},{"id":"thu-3422-0800","dow":4,"room":"3422","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 217","title":"Musicianship","instructor":"Charlotte Wilkins"},{"id":"thu-3422-0935","dow":4,"room":"3422","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 216-2","title":"Music Theory","instructor":"Anthony Wardzinski"},{"id":"thu-3422-1110","dow":4,"room":"3422","kind":"class","start":"11:10","end":"12:35","code":"MUSIC 216-3","title":"Music Theory","instructor":"Anthony Wardzinski"},{"id":"thu-3423-0800","dow":4,"room":"3423","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 111","title":"Music Appreciation","instructor":"LAPC STAFF"},{"id":"thu-3423-1110","dow":4,"room":"3423","kind":"class","start":"11:10","end":"12:35","code":"MUSIC 101","title":"Fundamentals Of Music","instructor":"Leila Nunez-Fredell"},{"id":"thu-3423-1315","dow":4,"room":"3423","kind":"amp","start":"13:15","end":"19:15","code":"","title":"AMP Lessons","instructor":"Joseph Dhanens"},{"id":"thu-3424-piano-lab-0800","dow":4,"room":"3424 (Piano lab)","kind":"class","start":"08:00","end":"09:25","code":"MUSIC 299, 322-324, 341","title":"Elementary Piano / Intermediate Piano / Music Honors","instructor":"Alexander Zhu"},{"id":"thu-3424-piano-lab-0935","dow":4,"room":"3424 (Piano lab)","kind":"class","start":"09:35","end":"11:00","code":"MUSIC 321","title":"Elementary Piano","instructor":"Alexander Zhu"},{"id":"thu-3424-piano-lab-1145","dow":4,"room":"3424 (Piano lab)","kind":"amp","start":"11:45","end":"13:15","code":"","title":"AMP Lessons","instructor":"Cameron Wilkins"},{"id":"fri-3400-choir-0900","dow":5,"room":"3400 (Choir)","kind":"class","start":"09:00","end":"12:10","code":"MUSIC 250","title":"Music Performance Workshop","instructor":"Garineh Avakian"},{"id":"fri-3401-band-1045","dow":5,"room":"3401 (Band)","kind":"amp","start":"10:45","end":"12:15","code":"","title":"AMP Lessons","instructor":"Mishkar Nunez-Fredell"},{"id":"fri-3414-j-lance-0800","dow":5,"room":"3414-J (Lance)","kind":"accomp","start":"08:00","end":"09:30","code":"","title":"Lance Accomp. Hours","instructor":"Lance"},{"id":"fri-3422-0845","dow":5,"room":"3422","kind":"amp","start":"08:45","end":"10:45","code":"","title":"AMP Lessons","instructor":"Byron Sleugh"},{"id":"fri-3422-1245","dow":5,"room":"3422","kind":"amp","start":"12:45","end":"14:15","code":"","title":"AMP Lessons","instructor":"Michael Matsuno"}]};
+const ROOMS = DATA.rooms, BASE = DATA.baseline;
+const TERM = {name:"Fall 2026", start:"2026-08-31", end:"2026-12-20"};
+const DAYNAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const KINDLABEL = {class:"Class",amp:"AMP lesson",accomp:"Accompanist",office:"Office hours",
+  encore:"Encore",checkout:"Checkout",blocked:"Blocked"};
+const KINDVAR = {class:"--k-class",amp:"--k-amp",accomp:"--k-accomp",office:"--k-office",
+  encore:"--k-encore",checkout:"--k-checkout",blocked:"--k-blocked"};
+
+/* ---------- time + date helpers ---------- */
+const pad = n => String(n).padStart(2,"0");
+const toMin = hm => { const [h,m] = hm.split(":").map(Number); return h*60+m; };
+const toHM  = m => pad(Math.floor(m/60))+":"+pad(m%60);
+const fmt12 = m => { const h=Math.floor(m/60), mm=m%60, ap=h>=12?"pm":"am";
+  const h12 = h%12===0?12:h%12; return h12+(mm?":"+pad(mm):"")+" "+ap; };
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseISO = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const d = parseISO(s); d.setDate(d.getDate()+n); return iso(d); };
+const longDate = s => parseISO(s).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+const shortDate = s => parseISO(s).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+const dow = s => parseISO(s).getDay();
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- state ---------- */
+const PRACTICE = ROOMS.filter(r => /^3414-[A-I]\b/.test(r));
+const isPractice = r => PRACTICE.includes(r);
+const roomTag = r => (r.match(/^3414-([A-I])\b/)||[,""])[1];
+
+const state = {
+  date: iso(new Date()), view:"day", weekRoom: ROOMS[0], q:"",
+  collapsePractice: true, kinds: new Set(),
+  canEdit:false, db:null, downloads:null,
+  exceptions:new Map(), reservations:new Map(), sel:null
+};
+const exKey = (baseId,date) => baseId.replace(/[^A-Za-z0-9_.~:@+-]/g,"_")+"__"+date;
+
+/* ---------- occurrence model ----------
+   A day's picture = weekly baseline from the master schedule
+   - per-date exceptions (cancel / move / note)
+   + reservations (checkouts and block-outs) that cover the date.        */
+function inTerm(date){ return date >= TERM.start && date <= TERM.end; }
+function occurrencesOn(date){
+  const wd = dow(date), out = [];
+  if (inTerm(date)) for (const b of BASE){
+    if (b.dow !== wd) continue;
+    const ex = state.exceptions.get(exKey(b.id,date));
+    const o = { srcId:b.id, src:"base", date, kind:b.kind, room:b.room,
+      start:toMin(b.start), end:toMin(b.end), code:b.code, title:b.title,
+      person:b.instructor, cancelled:false, moved:false, note:"", dateNote:"", ex:ex||null,
+      origRoom:b.room, origStart:toMin(b.start), origEnd:toMin(b.end) };
+    if (ex){
+      o.note = ex.note||""; o.dateNote = ex.note||"";
+      if (ex.status === "cancelled") o.cancelled = true;
+      else if (ex.status === "moved"){
+        o.moved = true;
+        if (ex.room) o.room = ex.room;
+        if (ex.start) o.start = toMin(ex.start);
+        if (ex.end)   o.end   = toMin(ex.end);
+      } else if (ex.status === "noted") o.moved = false;
+    }
+    out.push(o);
+  }
+  for (const [id,r] of state.reservations){
+    if (r.cancelled) continue;
+    if (date < r.dateStart || date > r.dateEnd) continue;
+    if (Array.isArray(r.days) && r.days.length && !r.days.includes(wd)) continue;
+    const ex = state.exceptions.get(exKey("res:"+id,date));
+    for (const room of (r.rooms||[])){
+      const o = { srcId:"res:"+id, resId:id, src:"res", date, kind:r.kind||"checkout", room,
+        start:toMin(r.timeStart), end:toMin(r.timeEnd), code:"", title:r.title||"Checkout",
+        person:r.person||"", cancelled:false, moved:false, note:r.note||"", dateNote:"", ex:ex||null,
+        origRoom:room, origStart:toMin(r.timeStart), origEnd:toMin(r.timeEnd), res:r };
+      if (ex){
+        if (ex.note){ o.note = ex.note; o.dateNote = ex.note; }
+        if (ex.status === "cancelled") o.cancelled = true;
+        else if (ex.status === "moved"){
+          o.moved = true;
+          if (ex.room) o.room = ex.room;
+          if (ex.start) o.start = toMin(ex.start);
+          if (ex.end)   o.end   = toMin(ex.end);
+        }
+      }
+      out.push(o);
+    }
+  }
+  return out.sort((a,b)=>a.start-b.start||a.end-b.end);
+}
+const matchQ = o => { if(!state.q) return true; const q = state.q.toLowerCase();
+  return [o.room,o.title,o.code,o.person,KINDLABEL[o.kind]].some(v=>String(v||"").toLowerCase().includes(q)); };
+const matchKind = o => { const sel = state.kinds; if (!sel.size) return true;
+  return sel.has(o.kind) || (sel.has("__cancelled") && o.cancelled); };
+const overlaps = (a,b) => a.start < b.end && b.start < a.end;
+
+/* ---------- grid rendering ---------- */
+function gridBounds(all){
+  let lo = 8*60, hi = 22*60;
+  for (const o of all){ if(o.start<lo) lo=Math.floor(o.start/60)*60; if(o.end>hi) hi=Math.ceil(o.end/60)*60; }
+  return [lo,hi];
+}
+function render(){
+  const grid = document.getElementById("grid");
+  const isWeek = state.view === "week";
+  const days = isWeek ? Array.from({length:7},(_,i)=>addDays(weekStart(state.date),i)) : [state.date];
+  let cols;
+  if (isWeek){
+    cols = days.map(d=>({key:d, label:DAYNAMES[dow(d)].slice(0,3), sub:shortDate(d),
+      date:d, rooms:[state.weekRoom]}));
+  } else {
+    cols = [];
+    let folded = false;
+    for (const r of ROOMS){
+      if (state.collapsePractice && isPractice(r)){
+        if (folded) continue;
+        folded = true;
+        cols.push({key:"__practice", label:"3414-A – I", sub:"Practice \u00d7"+PRACTICE.length,
+          date:state.date, rooms:PRACTICE, group:true});
+        continue;
+      }
+      cols.push({key:r, label:r.split(" ")[0], sub:(r.match(/\((.+)\)/)||[,""])[1],
+        date:state.date, rooms:[r]});
+    }
+  }
+
+  const byCol = new Map();
+  let all = [];
+  for (const c of cols){
+    const occ = occurrencesOn(c.date)
+      .filter(o => c.rooms.includes(o.room))
+      .filter(matchKind);
+    byCol.set(c.key, occ); all = all.concat(occ);
+  }
+  const [lo,hi] = gridBounds(all);
+  const ppm = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ppm"))||1;
+  const H = (hi-lo)*ppm;
+
+  grid.style.gridTemplateColumns = `var(--gut) repeat(${cols.length}, minmax(var(--colw), 1fr))`;
+  const todayISO = iso(new Date());
+  let html = `<div class="hd corner"><div class="rd">Time</div></div>`;
+  for (const c of cols){
+    const isToday = c.date === todayISO && isWeek;
+    html += `<div class="hd${isToday?" today":""}"><div class="rn">${esc(c.label)}</div>`+
+            (c.sub?`<div class="rd">${esc(c.sub)}</div>`:``)+`</div>`;
+  }
+  // time gutter
+  html += `<div class="gut" style="height:${H}px">`;
+  for (let m = lo; m <= hi; m += 30){
+    const top = (m-lo)*ppm, hour = m%60===0;
+    html += `<div class="tick${hour?"":" half"}" style="top:${top}px"></div>`;
+    if (hour) html += `<div class="tlab" style="top:${top}px">${fmt12(m).replace(" ","")}</div>`;
+  }
+  html += `</div>`;
+  // columns
+  for (const c of cols){
+    const occ = byCol.get(c.key);
+    html += `<div class="col${(state.canEdit && !c.group)?" free":""}" data-col="${esc(c.key)}" data-room="${esc(c.rooms[0])}" data-date="${c.date}" style="height:${H}px">`;
+    for (let m = lo; m <= hi; m += 30)
+      html += `<div class="tick${m%60===0?"":" half"}" style="top:${(m-lo)*ppm}px"></div>`;
+    if (c.date === todayISO){
+      const now = new Date(), nm = now.getHours()*60+now.getMinutes();
+      if (nm>=lo && nm<=hi) html += `<div class="nowline" style="top:${(nm-lo)*ppm}px"></div>`;
+    }
+    // lay out overlaps side by side
+    const lanes = assignLanes(occ);
+    occ.forEach((o,i)=>{
+      const L = lanes[i], top=(o.start-lo)*ppm, h=Math.max(15,(o.end-o.start)*ppm-2);
+      const w = 100/L.of, left = L.idx*w;
+      const cls = ["ev"]; if(o.cancelled)cls.push("cancelled"); if(o.moved)cls.push("moved");
+      if(h<26)cls.push("tiny"); else if(h<40)cls.push("short");
+      if(L.of>1)cls.push("narrow"); if(!matchQ(o))cls.push("dim");
+      const sub = [o.code,o.person].filter(Boolean).join(" &middot; ");
+      const tag = c.group ? `<span class="rmtag">${esc(roomTag(o.room))}</span>` : "";
+      html += `<button class="${cls.join(" ")}" data-k="${o.kind}" data-i="${i}" data-col="${esc(c.key)}"
+        style="top:${top}px;height:${h}px;left:calc(${left}% + 3px);width:calc(${w}% - 6px)"
+        title="${esc(o.title)} ${fmt12(o.start)}-${fmt12(o.end)}">
+        <div class="t">${fmt12(o.start)} &ndash; ${fmt12(o.end)}</div>
+        <div class="n">${tag}${esc(o.title)}</div>
+        ${sub?`<div class="s">${sub}</div>`:``}
+        ${o.cancelled?`<span class="flag cx">Cancelled</span>`:o.moved?`<span class="flag">Changed</span>`:
+          o.dateNote?`<span class="flag">Note</span>`:``}
+      </button>`;
+    });
+    html += `</div>`;
+  }
+  grid.innerHTML = html;
+  const anyInTerm = days.some(inTerm);
+  const tn = document.getElementById("termnote");
+  tn.classList.toggle("hidden", anyInTerm);
+  if (!anyInTerm) tn.innerHTML = `Outside the <strong>${esc(TERM.name)}</strong> term
+    (${esc(shortDate(TERM.start))} &ndash; ${esc(longDate(TERM.end))}). No classes are scheduled here.
+    Rooms can still be checked out.`;
+  grid.querySelectorAll(".ev").forEach(el=>{
+    el.addEventListener("click", ()=> openOccurrence(byCol.get(el.dataset.col)[+el.dataset.i]));
+  });
+  if (state.canEdit) grid.querySelectorAll(".col").forEach(el=>{
+    el.addEventListener("click", e=>{
+      if (e.target.closest(".ev")) return;
+      const y = e.clientY - el.getBoundingClientRect().top;
+      const m = Math.max(lo, Math.min(hi-30, Math.round((lo + y/ppm)/15)*15));
+      openNew({room:el.dataset.room, date:el.dataset.date, start:toHM(m), end:toHM(Math.min(hi,m+60))});
+    });
+  });
+  paintStamp(); paintChangeCount();
+}
+function assignLanes(occ){
+  const ends=[], out=[];
+  const groups=[]; let cur=[];
+  occ.forEach(o=>{
+    if (cur.length && !cur.some(x=>overlaps(x.o,o))) { groups.push(cur); cur=[]; }
+    cur.push({o});
+  });
+  if (cur.length) groups.push(cur);
+  for (const g of groups){
+    const lanes=[];
+    for (const item of g){
+      let idx = lanes.findIndex(end => end <= item.o.start);
+      if (idx === -1){ idx = lanes.length; lanes.push(0); }
+      lanes[idx] = item.o.end; item.idx = idx;
+    }
+    for (const item of g) out[occ.indexOf(item.o)] = {idx:item.idx, of:lanes.length};
+  }
+  return out;
+}
+function weekStart(d){ return addDays(d, -dow(d)); }
+function paintStamp(){
+  const el = document.getElementById("stamp");
+  if (state.view === "week"){
+    const s = weekStart(state.date);
+    el.innerHTML = `<small>Week of</small>${esc(shortDate(s))} &ndash; ${esc(shortDate(addDays(s,6)))}`;
+  } else {
+    el.innerHTML = `<small>${esc(DAYNAMES[dow(state.date)])}</small>${esc(longDate(state.date))}`;
+  }
+  document.getElementById("datepick").value = state.date;
+}
+function paintChangeCount(){
+  const n = state.exceptions.size + [...state.reservations.values()].filter(r=>!r.cancelled).length;
+  document.getElementById("chgCount").textContent = n ? String(n) : "";
+}
+function paintLegend(){
+  const cs = getComputedStyle(document.documentElement);
+  const on = k => state.kinds.has(k);
+  const html = Object.keys(KINDLABEL).map(k=>{
+      const c = cs.getPropertyValue(KINDVAR[k]);
+      return `<button class="lg" data-k="${k}" aria-pressed="${on(k)}"
+        ><span class="sw" style="border-color:${c};background:${c}22"></span>${KINDLABEL[k]}</button>`;
+    }).join("") +
+    `<button class="lg" data-k="__cancelled" aria-pressed="${on("__cancelled")}"
+      ><span class="sw" style="border-color:var(--line-2);background:var(--surface-3);border-left-style:dashed"></span>Cancelled</button>` +
+    (state.kinds.size ? `<button class="lg clear" id="clearKinds">Show all</button>` : ``) +
+    `<span class="meta">${esc(TERM.name)} &middot; ${esc(shortDate(TERM.start))}&ndash;${esc(shortDate(TERM.end))}
+      &middot; ${BASE.length} weekly blocks &middot; ${ROOMS.length} rooms</span>`;
+  const el = document.getElementById("legend");
+  el.innerHTML = html;
+  el.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{
+    const k = b.dataset.k;
+    state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k);
+    paintLegend(); render();
+  });
+  const cl = document.getElementById("clearKinds");
+  if (cl) cl.onclick = ()=>{ state.kinds.clear(); paintLegend(); render(); };
+}
+
+/* ---------- drawer ---------- */
+const drawer = document.getElementById("drawer"), scrim = document.getElementById("scrim");
+function openDrawer(title, sub, body, foot){
+  document.getElementById("dTitle").textContent = title;
+  document.getElementById("dSub").textContent = sub||"";
+  document.getElementById("dBody").innerHTML = body;
+  document.getElementById("dFoot").innerHTML = foot||"";
+  drawer.classList.add("on"); scrim.classList.add("on"); drawer.setAttribute("aria-hidden","false");
+  const f = drawer.querySelector("input,select,textarea,button"); if(f) f.focus();
+}
+function closeDrawer(){ drawer.classList.remove("on"); scrim.classList.remove("on");
+  drawer.setAttribute("aria-hidden","true"); state.sel=null; }
+document.getElementById("dClose").onclick = closeDrawer;
+scrim.onclick = closeDrawer;
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeDrawer(); });
+
+function openOccurrence(o){
+  state.sel = o;
+  const when = `${fmt12(o.start)} – ${fmt12(o.end)}`;
+  const orig = (o.moved) ? `<dt>Was</dt><dd class="mono">${esc(o.origRoom)} · ${fmt12(o.origStart)} – ${fmt12(o.origEnd)}</dd>` : "";
+  let body = `
+    <dl class="kv">
+      <dt>Type</dt><dd>${KINDLABEL[o.kind]}</dd>
+      <dt>Room</dt><dd class="mono">${esc(o.room)}</dd>
+      <dt>Time</dt><dd class="mono">${when}</dd>
+      <dt>Date</dt><dd>${esc(longDate(o.date))}</dd>
+      ${o.code?`<dt>Course</dt><dd class="mono">${esc(o.code)}</dd>`:""}
+      ${o.person?`<dt>${o.src==="res"?"Checked out by":"Instructor"}</dt><dd>${esc(o.person)}</dd>`:""}
+      ${orig}
+    </dl>`;
+  if (o.cancelled) body += `<div class="note warn"><strong>Cancelled</strong> for this date.${o.note?" "+esc(o.note):""}</div>`;
+  else if (o.note) body += `<div class="note"><strong>Note.</strong> ${esc(o.note)}</div>`;
+  if (o.src === "res" && o.res){
+    const r = o.res;
+    body += `<div class="note">Part of a checkout running <span class="mono">${esc(shortDate(r.dateStart))} – ${esc(shortDate(r.dateEnd))}</span>,
+      <span class="mono">${fmt12(toMin(r.timeStart))} – ${fmt12(toMin(r.timeEnd))}</span>,
+      ${r.rooms.length} room${r.rooms.length>1?"s":""}${r.days&&r.days.length?", "+r.days.map(d=>DAYNAMES[d].slice(0,3)).join(" "):""}.</div>`;
+  }
+  if (!state.canEdit){
+    openDrawer(o.title, KINDLABEL[o.kind], body, `<span class="badge">View only</span>`);
+    return;
+  }
+  body += `
+    <div class="sec-t">Change this date only</div>
+    <div class="row">
+      <div class="field"><label for="mStart">New start</label><input type="time" id="mStart" value="${toHM(o.start)}"></div>
+      <div class="field"><label for="mEnd">New end</label><input type="time" id="mEnd" value="${toHM(o.end)}"></div>
+    </div>
+    <div class="field"><label for="mRoom">Room</label><select id="mRoom">${
+      ROOMS.map(r=>`<option${r===o.room?" selected":""}>${esc(r)}</option>`).join("")}</select></div>
+    <div class="field"><label for="mNote">Note (shown on the block)</label>
+      <input type="text" id="mNote" value="${esc(o.note)}" placeholder="e.g. moved for guest clinician"></div>`;
+  const foot = `
+    <button class="btn primary" id="saveMove">Save change</button>
+    ${o.cancelled ? `<button class="btn" id="restore">Restore</button>`
+                  : `<button class="btn" id="cancelOcc">Cancel this date</button>`}
+    ${o.ex ? `<button class="btn ghost" id="clearEx">Reset to master</button>` : ""}
+    ${o.src==="res" ? `<button class="btn ghost" id="delRes" style="margin-left:auto;color:var(--accent)">Delete whole checkout</button>`:""}`;
+  openDrawer(o.title, `${KINDLABEL[o.kind]} · ${longDate(o.date)}`, body, foot);
+
+  const $ = id => document.getElementById(id);
+  $("saveMove").onclick = async ()=>{
+    const s = $("mStart").value, e = $("mEnd").value, r = $("mRoom").value, n = $("mNote").value.trim();
+    if (toMin(e) <= toMin(s)) return flash("End time must be after the start time.");
+    const changed = (s!==toHM(o.origStart) || e!==toHM(o.origEnd) || r!==o.origRoom);
+    await writeException(o.srcId, o.date, {
+      status: changed ? "moved" : (n ? "noted" : "clear"), room:r, start:s, end:e, note:n });
+    closeDrawer();
+  };
+  if ($("cancelOcc")) $("cancelOcc").onclick = async ()=>{
+    await writeException(o.srcId, o.date, {status:"cancelled", note:$("mNote").value.trim()});
+    closeDrawer();
+  };
+  if ($("restore")) $("restore").onclick = async ()=>{ await clearException(o.srcId, o.date); closeDrawer(); };
+  if ($("clearEx")) $("clearEx").onclick = async ()=>{ await clearException(o.srcId, o.date); closeDrawer(); };
+  if ($("delRes")) $("delRes").onclick = async ()=>{
+    if (!confirm("Delete this checkout for every date in its range?")) return;
+    await state.db.doc("reservations/"+o.resId).delete(); closeDrawer();
+  };
+}
+
+function openNew(seed){
+  seed = seed || {};
+  const d0 = seed.date || state.date;
+  const body = `
+    <div class="field"><label for="fTitle">What is this for</label>
+      <input type="text" id="fTitle" placeholder="e.g. Honor Band auditions" value="${esc(seed.title||"")}"></div>
+    <div class="row">
+      <div class="field"><label for="fPerson">Requested by</label>
+        <input type="text" id="fPerson" placeholder="Name"></div>
+      <div class="field"><label for="fKind">Type</label>
+        <select id="fKind"><option value="checkout">Checkout</option><option value="blocked">Blocked / unavailable</option></select></div>
+    </div>
+    <div class="sec-t">Rooms</div>
+    <div class="chips" id="fRooms">${ROOMS.map(r=>
+      `<button type="button" class="chip" data-r="${esc(r)}" aria-pressed="${seed.room===r?"true":"false"}">${esc(r.split(" ")[0])}</button>`).join("")}</div>
+    <div class="chips" style="margin-top:2px">
+      <button type="button" class="btn ghost" id="allRooms" style="font-size:12px;padding:3px 8px">Select all</button>
+      <button type="button" class="btn ghost" id="noRooms" style="font-size:12px;padding:3px 8px">Clear</button></div>
+    <div class="sec-t">Dates</div>
+    <div class="row">
+      <div class="field"><label for="fFrom">From</label><input type="date" id="fFrom" value="${d0}"></div>
+      <div class="field"><label for="fTo">Through</label><input type="date" id="fTo" value="${d0}"></div>
+    </div>
+    <div class="field"><label>Only on these days <span style="text-transform:none;letter-spacing:0;font-weight:500">(leave blank for every day in the range)</span></label>
+      <div class="chips" id="fDays">${[1,2,3,4,5,6,0].map(i=>
+        `<button type="button" class="chip wd" data-d="${i}" aria-pressed="false">${DAYNAMES[i].slice(0,3)}</button>`).join("")}</div></div>
+    <div class="sec-t">Time</div>
+    <div class="row">
+      <div class="field"><label for="fStart">Start</label><input type="time" id="fStart" value="${seed.start||"08:00"}"></div>
+      <div class="field"><label for="fEnd">End</label><input type="time" id="fEnd" value="${seed.end||"17:00"}"></div>
+    </div>
+    <div class="field"><label for="fNote">Note</label>
+      <input type="text" id="fNote" placeholder="Anything the department should know"></div>
+    <div id="fConflict"></div>`;
+  openDrawer("Check out rooms", "Reserve or block rooms across a date range",
+    body, `<button class="btn primary" id="fSave">Check out</button><button class="btn ghost" id="fCancel">Cancel</button>`);
+
+  const $ = id => document.getElementById(id);
+  const roomBtns = [...$("fRooms").querySelectorAll(".chip")];
+  const dayBtns  = [...$("fDays").querySelectorAll(".chip")];
+  const toggle = b => b.setAttribute("aria-pressed", b.getAttribute("aria-pressed")==="true"?"false":"true");
+  roomBtns.forEach(b=>b.onclick=()=>{toggle(b);preview();});
+  dayBtns.forEach(b=>b.onclick=()=>{toggle(b);preview();});
+  $("allRooms").onclick = ()=>{roomBtns.forEach(b=>b.setAttribute("aria-pressed","true"));preview();};
+  $("noRooms").onclick  = ()=>{roomBtns.forEach(b=>b.setAttribute("aria-pressed","false"));preview();};
+  ["fFrom","fTo","fStart","fEnd"].forEach(id=>$(id).onchange = preview);
+  $("fCancel").onclick = closeDrawer;
+
+  const read = () => ({
+    title: $("fTitle").value.trim() || "Checkout",
+    person: $("fPerson").value.trim(),
+    kind: $("fKind").value,
+    rooms: roomBtns.filter(b=>b.getAttribute("aria-pressed")==="true").map(b=>b.dataset.r),
+    days: dayBtns.filter(b=>b.getAttribute("aria-pressed")==="true").map(b=>+b.dataset.d),
+    dateStart: $("fFrom").value, dateEnd: $("fTo").value,
+    timeStart: $("fStart").value, timeEnd: $("fEnd").value,
+    note: $("fNote").value.trim(), cancelled:false, at: Date.now()
+  });
+  function preview(){
+    const r = read(), box = $("fConflict");
+    if (!r.rooms.length || !r.dateStart || !r.dateEnd) { box.innerHTML=""; return; }
+    const hits = findConflicts(r);
+    box.innerHTML = hits.length
+      ? `<div class="note warn"><strong>${hits.length} overlap${hits.length>1?"s":""}</strong> with what is already scheduled.
+         You can still check out — the grid will show them side by side.
+         <div style="margin-top:6px;font-family:var(--font-m);font-size:11.5px;line-height:1.5">
+         ${hits.slice(0,6).map(h=>`${shortDate(h.date)} · ${h.room.split(" ")[0]} · ${esc(h.title)} ${fmt12(h.start)}–${fmt12(h.end)}`).join("<br>")}
+         ${hits.length>6?`<br>+ ${hits.length-6} more`:""}</div></div>`
+      : `<div class="note" style="color:var(--ok)">No conflicts in that range.</div>`;
+  }
+  preview();
+  $("fSave").onclick = async ()=>{
+    const r = read();
+    if (!r.rooms.length) return flash("Pick at least one room.");
+    if (!r.dateStart || !r.dateEnd) return flash("Set a start and end date.");
+    if (r.dateEnd < r.dateStart) return flash("The end date is before the start date.");
+    if (toMin(r.timeEnd) <= toMin(r.timeStart)) return flash("End time must be after the start time.");
+    await state.db.collection("reservations").add(r);
+    state.date = r.dateStart; closeDrawer(); render();
+  };
+}
+function findConflicts(r){
+  const out=[]; let d=r.dateStart, guard=0;
+  while (d <= r.dateEnd && guard++ < 400){
+    if (!r.days.length || r.days.includes(dow(d))){
+      for (const o of occurrencesOn(d)){
+        if (o.cancelled || !r.rooms.includes(o.room)) continue;
+        if (o.start < toMin(r.timeEnd) && toMin(r.timeStart) < o.end)
+          out.push({date:d, room:o.room, title:o.title, start:o.start, end:o.end});
+      }
+    }
+    d = addDays(d,1);
+  }
+  return out;
+}
+function openChanges(){
+  const rows = [];
+  for (const [id,r] of state.reservations) if(!r.cancelled) rows.push({t:"res", id, r, sort:r.dateStart});
+  for (const [k,e] of state.exceptions) rows.push({t:"ex", id:k, e, sort:e.date});
+  rows.sort((a,b)=> (a.sort<b.sort?-1:a.sort>b.sort?1:0));
+  const body = rows.length ? `<div class="list">${rows.map(row=>{
+    if (row.t==="res"){ const r=row.r;
+      return `<button class="item" data-goto="${r.dateStart}">
+        <span class="bar-c" style="background:var(--${r.kind==="blocked"?"k-blocked":"k-checkout"})"></span>
+        <span class="m"><b>${esc(r.title)}${r.kind==="blocked"?" — blocked":""}</b>
+        <span>${esc(shortDate(r.dateStart))}–${esc(shortDate(r.dateEnd))} · ${fmt12(toMin(r.timeStart))}–${fmt12(toMin(r.timeEnd))} · ${r.rooms.map(x=>x.split(" ")[0]).join(", ")}</span>
+        ${r.person?`<span>${esc(r.person)}</span>`:""}</span></button>`;
+    }
+    const e=row.e, lbl = e.status==="cancelled"?"Cancelled":e.status==="moved"?"Changed":"Note";
+    const name = baseTitle(e.baseId);
+    return `<button class="item" data-goto="${e.date}">
+      <span class="bar-c" style="background:var(--${e.status==="cancelled"?"line-2":"warn"})"></span>
+      <span class="m"><b>${lbl} — ${esc(name)}</b>
+      <span>${esc(shortDate(e.date))}${e.room?" · "+esc(e.room.split(" ")[0]):""}${e.start?" · "+fmt12(toMin(e.start))+"–"+fmt12(toMin(e.end)):""}</span>
+      ${e.note?`<span>${esc(e.note)}</span>`:""}</span></button>`;
+  }).join("")}</div>`
+  : `<div class="empty">Nothing has been changed yet. The grid is showing the weekly master schedule exactly as it came from the spreadsheet.</div>`;
+  openDrawer("Changes and checkouts", `${rows.length} entr${rows.length===1?"y":"ies"} on top of the master schedule`,
+    body, `<button class="btn ghost" id="cClose">Close</button>`);
+  document.getElementById("cClose").onclick = closeDrawer;
+  drawer.querySelectorAll("[data-goto]").forEach(el=>el.onclick=()=>{
+    state.date = el.dataset.goto; state.view="day"; syncView(); closeDrawer(); render();
+  });
+}
+function baseTitle(baseId){
+  if (String(baseId).startsWith("res:")){
+    const r = state.reservations.get(String(baseId).slice(4));
+    return r ? r.title : "Checkout";
+  }
+  const b = BASE.find(x=>x.id===baseId);
+  return b ? `${b.title}${b.room?" · "+b.room.split(" ")[0]:""}` : baseId;
+}
+function flash(msg){
+  const f = document.getElementById("dFoot");
+  let n = f.querySelector(".flashmsg");
+  if (!n){ n = document.createElement("span"); n.className="flashmsg";
+    n.style.cssText="color:var(--accent);font-size:12px;font-weight:600;align-self:center"; f.appendChild(n); }
+  n.textContent = msg;
+}
+
+/* ---------- persistence ---------- */
+async function writeException(baseId, date, patch){
+  if (!state.db) return;
+  const id = exKey(baseId,date);
+  if (patch.status === "clear") return clearException(baseId,date);
+  const doc = {baseId, date, status:patch.status, note:patch.note||"", at:Date.now()};
+  if (patch.status === "moved"){ doc.room=patch.room; doc.start=patch.start; doc.end=patch.end; }
+  try { await state.db.doc("exceptions/"+id).set(doc); }
+  catch(err){ alert("That change could not be saved. If you were signed in, your session may have expired — sign in again and retry."); }
+}
+async function clearException(baseId, date){
+  if (!state.db) return;
+  try { await state.db.doc("exceptions/"+exKey(baseId,date)).delete(); }
+  catch(err){ alert("That change could not be saved. If you were signed in, your session may have expired — sign in again and retry."); }
+}
+
+/* ---------- export ---------- */
+function buildCSV(){
+  const days = state.view==="week"
+    ? Array.from({length:7},(_,i)=>addDays(weekStart(state.date),i)) : [state.date];
+  const rows = [["Date","Day","Room","Start","End","Type","Course","Title","Person","Status","Note"]];
+  for (const d of days) for (const o of occurrencesOn(d))
+    rows.push([d, DAYNAMES[dow(d)], o.room, toHM(o.start), toHM(o.end), KINDLABEL[o.kind],
+      o.code, o.title, o.person, o.cancelled?"Cancelled":o.moved?"Changed":"Scheduled", o.note]);
+  return rows.map(r=>r.map(c=>{ const s=String(c==null?"":c);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }).join(",")).join("\n");
+}
+function doExport(){
+  const csv = buildCSV();
+  const name = `room-schedule-${state.view==="week"?"week-of-"+weekStart(state.date):state.date}.csv`;
+  const url = URL.createObjectURL(new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"}));
+  const a = Object.assign(document.createElement("a"), {href:url, download:name});
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- wiring ---------- */
+function syncView(){
+  const week = state.view==="week";
+  document.getElementById("vDay").setAttribute("aria-pressed", String(!week));
+  document.getElementById("vWeek").setAttribute("aria-pressed", String(week));
+  document.getElementById("weekRoom").classList.toggle("hidden", !week);
+  paintFold();
+}
+document.getElementById("prev").onclick = ()=>{ state.date = addDays(state.date, state.view==="week"?-7:-1); render(); };
+document.getElementById("next").onclick = ()=>{ state.date = addDays(state.date, state.view==="week"?7:1); render(); };
+document.getElementById("today").onclick = ()=>{ state.date = iso(new Date()); render(); };
+document.getElementById("datepick").onchange = e=>{ if(e.target.value){ state.date = e.target.value; render(); } };
+document.getElementById("vDay").onclick  = ()=>{ state.view="day"; syncView(); render(); };
+document.getElementById("vWeek").onclick = ()=>{ state.view="week"; syncView(); render(); };
+document.getElementById("search").oninput = e=>{ state.q = e.target.value.trim(); render(); };
+function paintFold(){
+  const b = document.getElementById("foldBtn");
+  b.textContent = state.collapsePractice ? `Show practice rooms (${PRACTICE.length})` : "Hide practice rooms";
+  b.setAttribute("aria-pressed", String(!state.collapsePractice));
+  b.classList.toggle("hidden", state.view === "week");
+}
+document.getElementById("foldBtn").onclick = ()=>{
+  state.collapsePractice = !state.collapsePractice; paintFold(); render();
+};
+document.getElementById("openChanges").onclick = openChanges;
+document.getElementById("exportBtn").onclick = doExport;
+document.getElementById("newBtn").onclick = ()=>openNew({date:state.date});
+
+const wr = document.getElementById("weekRoom");
+wr.innerHTML = ROOMS.map(r=>`<option>${esc(r)}</option>`).join("");
+wr.onchange = e=>{ state.weekRoom = e.target.value; render(); };
+
+paintLegend(); paintFold(); syncView(); render();
+
+/* ---------- Supabase: storage, live sync, and the shared editor login ----------
+   Documents are stored whole in a jsonb column, so the app's own shapes go in
+   and come back untouched. Reads are open to anyone with the link; writes are
+   gated by Postgres row-level security, not by anything in this page. */
+const conn = document.getElementById("connBadge");
+const role = document.getElementById("roleBadge");
+const authBtn = document.getElementById("authBtn");
+let sb = null;
+
+function makeDb(client){
+  const split = path => { const i = path.indexOf("/"); return [path.slice(0,i), path.slice(i+1)]; };
+  const fail = e => { throw Object.assign(new Error(e.message||"write failed"), {code:e.code}); };
+  return {
+    doc(path){
+      const [table,id] = split(path);
+      return {
+        id, path,
+        async get(){ const {data} = await client.from(table).select("data").eq("id",id).maybeSingle();
+          return {id, exists:!!data, data:()=>data&&data.data}; },
+        async set(v){ const {error} = await client.from(table)
+          .upsert({id, data:v, updated_at:new Date().toISOString()}); if(error) fail(error); },
+        async delete(){ const {error} = await client.from(table).delete().eq("id",id); if(error) fail(error); }
+      };
+    },
+    collection(table){
+      return {
+        path: table,
+        doc: id => makeDb(client).doc(table+"/"+id),
+        async add(v){ const {data,error} = await client.from(table)
+          .insert({data:v}).select("id").single(); if(error) fail(error); return {id:data.id}; },
+        onSnapshot(next, onErr){
+          let dead = false;
+          const pull = async () => {
+            const {data,error} = await client.from(table).select("id,data");
+            if (dead) return;
+            if (error){ if(onErr) onErr({code:"unavailable", message:error.message}); return; }
+            const docs = data.map(r=>({id:r.id, exists:true, data:()=>r.data}));
+            next({docs, size:docs.length, empty:!docs.length, docChanges:()=>[], metadata:{}});
+          };
+          pull();
+          const ch = client.channel("live-"+table)
+            .on("postgres_changes", {event:"*", schema:"public", table}, pull)
+            .subscribe(st=>{ conn.textContent = st==="SUBSCRIBED" ? "Live" : "Reconnecting"; });
+          return ()=>{ dead=true; client.removeChannel(ch); };
+        }
+      };
+    }
+  };
+}
+
+function setSignedIn(on, email){
+  state.canEdit = on;
+  role.textContent = on ? "Can edit" : "View only";
+  role.classList.toggle("edit", on);
+  role.title = on ? "Signed in as "+email : "Sign in to check out rooms and mark changes.";
+  authBtn.textContent = on ? "Sign out" : "Sign in to edit";
+  document.getElementById("newBtn").classList.toggle("hidden", !on);
+  render();
+}
+
+/* sign-in dialog */
+const siBox = document.getElementById("signin"), siScrim = document.getElementById("authScrim");
+const siErr = document.getElementById("siErr");
+function openSignin(){
+  siErr.hidden = true; document.getElementById("siPass").value = "";
+  siBox.classList.add("on"); siScrim.classList.add("on"); siBox.setAttribute("aria-hidden","false");
+  document.getElementById("siEmail").focus();
+}
+function closeSignin(){
+  siBox.classList.remove("on"); siScrim.classList.remove("on"); siBox.setAttribute("aria-hidden","true");
+}
+document.getElementById("siCancel").onclick = closeSignin;
+siScrim.onclick = closeSignin;
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeSignin(); });
+
+document.getElementById("siForm").onsubmit = async e=>{
+  e.preventDefault();
+  if (!sb) return;
+  const go = document.getElementById("siGo");
+  go.disabled = true; go.textContent = "Signing in…"; siErr.hidden = true;
+  const {error} = await sb.auth.signInWithPassword({
+    email: document.getElementById("siEmail").value.trim(),
+    password: document.getElementById("siPass").value
+  });
+  go.disabled = false; go.textContent = "Sign in";
+  if (error){ siErr.textContent = "That email and password did not match. Check with whoever set this up."; siErr.hidden = false; return; }
+  closeSignin();
+};
+
+authBtn.onclick = async ()=>{
+  if (!sb) return;
+  if (state.canEdit){ await sb.auth.signOut(); } else { openSignin(); }
+};
+
+/* boot */
+(async ()=>{
+  const cfg = window.ROOM_CHECKOUT_CONFIG || {};
+  if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey ||
+      cfg.supabaseUrl.includes("YOUR-PROJECT")){
+    conn.textContent = "Not configured"; conn.classList.remove("live");
+    role.textContent = "Master schedule only";
+    role.title = "Add your Supabase URL and key to config.js to turn on checkouts.";
+    authBtn.classList.add("hidden");
+    return;
+  }
+  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  state.db = makeDb(sb);
+
+  const {data:{session}} = await sb.auth.getSession();
+  setSignedIn(!!session, session && session.user && session.user.email);
+  sb.auth.onAuthStateChange((_e, sess)=> setSignedIn(!!sess, sess && sess.user && sess.user.email));
+
+  state.db.collection("exceptions").onSnapshot(snap=>{
+    state.exceptions = new Map(snap.docs.map(d=>[d.id, d.data()])); render();
+  });
+  state.db.collection("reservations").onSnapshot(snap=>{
+    state.reservations = new Map(snap.docs.map(d=>[d.id, d.data()])); render();
+  });
+})();
+</script>

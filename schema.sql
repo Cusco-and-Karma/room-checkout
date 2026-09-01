@@ -1,0 +1,38 @@
+-- Room Checkout — database setup.
+-- Paste this whole file into the Supabase SQL Editor and run it once.
+--
+-- Two tables, each storing its records whole as jsonb so the app's own data
+-- shapes survive a round trip untouched. The weekly master schedule is NOT
+-- here: it is compiled into index.html from the department spreadsheet.
+
+create table if not exists public.exceptions (
+  id          text primary key,          -- "<block id>__<date>", one per changed occurrence
+  data        jsonb not null,
+  updated_at  timestamptz not null default now()
+);
+
+create table if not exists public.reservations (
+  id          uuid primary key default gen_random_uuid(),
+  data        jsonb not null,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.exceptions   enable row level security;
+alter table public.reservations enable row level security;
+
+-- Anyone with the link may read the schedule.
+drop policy if exists "public read exceptions"   on public.exceptions;
+drop policy if exists "public read reservations" on public.reservations;
+create policy "public read exceptions"   on public.exceptions   for select to anon, authenticated using (true);
+create policy "public read reservations" on public.reservations for select to anon, authenticated using (true);
+
+-- Only a signed-in editor may change anything. This is the real gate: it is
+-- enforced by Postgres, so it holds no matter what the browser sends.
+drop policy if exists "editors write exceptions"   on public.exceptions;
+drop policy if exists "editors write reservations" on public.reservations;
+create policy "editors write exceptions"   on public.exceptions   for all to authenticated using (true) with check (true);
+create policy "editors write reservations" on public.reservations for all to authenticated using (true) with check (true);
+
+-- Push changes to everyone who has the page open.
+alter publication supabase_realtime add table public.exceptions;
+alter publication supabase_realtime add table public.reservations;
