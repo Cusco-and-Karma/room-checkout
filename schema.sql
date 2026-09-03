@@ -33,6 +33,14 @@ drop policy if exists "editors write reservations" on public.reservations;
 create policy "editors write exceptions"   on public.exceptions   for all to authenticated using (true) with check (true);
 create policy "editors write reservations" on public.reservations for all to authenticated using (true) with check (true);
 
+-- Table privileges, stated explicitly so this schema does not depend on the
+-- project's "automatically expose new tables" setting being on. anon gets read
+-- only; writing is reserved to signed-in editors at the SQL level as well as
+-- through the policies above.
+grant usage on schema public to anon, authenticated;
+grant select on public.exceptions, public.reservations to anon, authenticated;
+grant insert, update, delete on public.exceptions, public.reservations to authenticated;
+
 -- Push changes to everyone who has the page open.
 alter publication supabase_realtime add table public.exceptions;
 alter publication supabase_realtime add table public.reservations;
