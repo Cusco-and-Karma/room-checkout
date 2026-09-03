@@ -21,17 +21,17 @@ alter table public.exceptions   enable row level security;
 alter table public.reservations enable row level security;
 
 -- Anyone with the link may read the schedule.
-drop policy if exists "public read exceptions"   on public.exceptions;
-drop policy if exists "public read reservations" on public.reservations;
-create policy "public read exceptions"   on public.exceptions   for select to anon, authenticated using (true);
-create policy "public read reservations" on public.reservations for select to anon, authenticated using (true);
+drop policy if exists read_exceptions   on public.exceptions;
+drop policy if exists read_reservations on public.reservations;
+create policy read_exceptions   on public.exceptions   for select to anon, authenticated using (true);
+create policy read_reservations on public.reservations for select to anon, authenticated using (true);
 
 -- Only a signed-in editor may change anything. This is the real gate: it is
 -- enforced by Postgres, so it holds no matter what the browser sends.
-drop policy if exists "editors write exceptions"   on public.exceptions;
-drop policy if exists "editors write reservations" on public.reservations;
-create policy "editors write exceptions"   on public.exceptions   for all to authenticated using (true) with check (true);
-create policy "editors write reservations" on public.reservations for all to authenticated using (true) with check (true);
+drop policy if exists write_exceptions   on public.exceptions;
+drop policy if exists write_reservations on public.reservations;
+create policy write_exceptions   on public.exceptions   for all to authenticated using (true) with check (true);
+create policy write_reservations on public.reservations for all to authenticated using (true) with check (true);
 
 -- Table privileges, stated explicitly so this schema does not depend on the
 -- project's "automatically expose new tables" setting being on. anon gets read
